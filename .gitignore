@@ -209,3 +209,7 @@ __marimo__/
 # Data and Cache
 data/
 cache/
+
+
+.vscode/
+vscode/
