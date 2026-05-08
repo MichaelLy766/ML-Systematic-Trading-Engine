@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.abspath('..'))
+
 import polars as pl
 import research
 from pathlib import Path
@@ -15,7 +19,7 @@ def process_file(file_path):
         return pl.DataFrame()
 
 if __name__ == '__main__':
-    cache_dir = Path('cache')
+    cache_dir = Path('../cache')
     parquet_files = sorted(list(cache_dir.glob('*.parquet')))
 
     print(f"Found {len(parquet_files)} parquet files. Processing in parallel...")
@@ -32,7 +36,7 @@ if __name__ == '__main__':
 
     if results:
         final_df = pl.concat(results).sort('datetime')
-        final_df.write_csv("BTCUSDT_8h_ohlc.csv")
-        print("Successfully saved BTCUSDT_8h_ohlc.csv")
+        final_df.write_csv("../historical_data/BTCUSDT_8h_ohlc_1yr.csv")
+        print("Successfully saved BTCUSDT_8h_ohlc_1yr.csv")
     else:
         print("No data processed.")
