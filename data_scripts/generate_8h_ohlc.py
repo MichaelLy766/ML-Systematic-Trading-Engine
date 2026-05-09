@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     if results:
         final_df = pl.concat(results).sort('datetime')
-        final_df.write_csv("../historical_data/BTCUSDT_8h_ohlc_1yr.csv")
-        print("Successfully saved BTCUSDT_8h_ohlc_1yr.csv")
+        final_df.write_csv("../historical_data/BTCUSDT_8h_ohlc_updated.csv")
+        print("Successfully saved BTCUSDT_8h_ohlc_updated.csv")
     else:
         print("No data processed.")

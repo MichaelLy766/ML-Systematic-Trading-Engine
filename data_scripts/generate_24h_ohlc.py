@@ -12,7 +12,7 @@ import os
 def process_file(file_path):
     try:
         df = pl.read_parquet(file_path)
-        ts = research.timeseries(df, "12h", research.OHLC_AGGS)
+        ts = research.timeseries(df, "1d", research.OHLC_AGGS)
         return ts
     except Exception as e:
         print(f"Skipping {file_path} due to error: {e}")
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     if results:
         final_df = pl.concat(results).sort('datetime')
-        final_df.write_csv("../historical_data/BTCUSDT_12h_ohlc_updated.csv")
-        print("Successfully saved BTCUSDT_12h_ohlc_updated.csv")
+        final_df.write_csv("../historical_data/BTCUSDT_24h_ohlc_updated.csv")
+        print("Successfully saved BTCUSDT_24h_ohlc_updated.csv")
     else:
         print("No data processed.")
