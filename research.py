@@ -874,7 +874,8 @@ def model_trade_results(y_true, y_pred) -> pl.DataFrame:
 
 
 def add_tx_fee(trades: pl.DataFrame, tx_fee: float, name: str):
-    tx_fee_col = (pl.col('exit_trade_value') * tx_fee + pl.col('entry_trade_value') * tx_fee).alias(f"tx_fee_{name}")
+    # Multiply by abs(dir_signal) so that if we don't enter a trade (dir_signal=0), we don't pay a fee
+    tx_fee_col = ((pl.col('exit_trade_value') * tx_fee + pl.col('entry_trade_value') * tx_fee) * pl.col('dir_signal').abs().fill_null(1.0)).alias(f"tx_fee_{name}")
     return trades.with_columns(tx_fee_col)
 
 
