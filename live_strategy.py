@@ -22,10 +22,11 @@ class Tick(Generic[T, R]):
         pass
 
 class IntervalFeatureExtractor:
-    def __init__(self, symbol: str, interval: str, num_lags: int):
+    def __init__(self, symbol: str, interval: str, lags: List[int]):
         self.symbol = symbol.replace('/', '') # Binance expects BTCUSDT
         self.interval = interval
-        self.num_lags = num_lags
+        self.lags = sorted(lags)
+        self.max_lag = max(self.lags) if self.lags else 1
         self.historical_returns = []
         self.last_close_price = None
 
@@ -33,7 +34,7 @@ class IntervalFeatureExtractor:
         import requests
         import math
         # Fetch completed candles from Binance public API
-        url = f"https://fapi.binance.com/fapi/v1/klines?symbol={self.symbol}&interval={self.interval}&limit={self.num_lags + 2}"
+        url = f"https://fapi.binance.com/fapi/v1/klines?symbol={self.symbol}&interval={self.interval}&limit={self.max_lag + 2}"
         data = requests.get(url).json()
         
         # Binance kline: [open_time, open, high, low, close, ...]
@@ -55,10 +56,12 @@ class IntervalFeatureExtractor:
             
         current_return = math.log(live_price / self.last_close_price)
         
-        if self.num_lags == 1:
-            features = [current_return]
-        else:
-            features = self.historical_returns[-(self.num_lags - 1):] + [current_return]
+        features = []
+        for lag in self.lags:
+            if lag == 1:
+                features.append(current_return)
+            else:
+                features.append(self.historical_returns[-(lag - 1)])
             
         return torch.tensor([features], dtype=torch.float32)
 
@@ -114,8 +117,14 @@ class LiveTakerStrat:
 def main():
     load_dotenv()
     
-    # 1. Load Model
-    model = models.LinearModel(1)
+    # 1. Configuration for the loaded model
+    # Specify exactly which lags this model uses. 
+    # E.g., [3] for ONLY the 3rd lag, or [1, 2, 3] for all three.
+    model_lags = [3]
+    
+    # 2. Load Model
+    # The number of inputs matches the length of the model_lags list
+    model = models.LinearModel(len(model_lags))
     model.load_state_dict(torch.load('trading_strategy/1d_lag3_model.pth', weights_only=True))
     model.eval()
 
@@ -128,9 +137,9 @@ def main():
         print("Please ensure your .env file has valid BINANCE_API_KEY and BINANCE_API_SECRET")
         return
 
-    # 3. Initialize Strategy with proper interval features
-    # Adjust this interval ('1d', '12h', '1m', etc.) and num_lags to perfectly match the model you loaded above!
-    extractor = IntervalFeatureExtractor(symbol='BTCUSDT', interval='1d', num_lags=3)  # Must match model: 1d_lag3_model uses lag_3
+    # 4. Initialize Strategy with proper interval features
+    # Pass the list of lags to ensure the exact correct historical data is queried
+    extractor = IntervalFeatureExtractor(symbol='BTCUSDT', interval='1d', lags=model_lags)
     
     live_strat = LiveTakerStrat(
         sym='BTCUSDT', 
