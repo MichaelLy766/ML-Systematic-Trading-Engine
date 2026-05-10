@@ -130,7 +130,7 @@ def main():
 
     # 3. Initialize Strategy with proper interval features
     # Adjust this interval ('1d', '12h', '1m', etc.) and num_lags to perfectly match the model you loaded above!
-    extractor = IntervalFeatureExtractor(symbol='BTCUSDT', interval='1d', num_lags=1)
+    extractor = IntervalFeatureExtractor(symbol='BTCUSDT', interval='1d', num_lags=3)  # Must match model: 1d_lag3_model uses lag_3
     
     live_strat = LiveTakerStrat(
         sym='BTCUSDT', 
