@@ -77,6 +77,7 @@ class LiveTakerStrat:
         self.model = model
         self.feature_extractor = feature_extractor
         self.scale_factor = scale_factor
+        self.latest_prediction = None
 
     def _signed_compound_trade_size(self, y_hat: float, account: Any, cur_price: Decimal) -> Decimal:
         dir_signal = np.sign(y_hat)
@@ -111,6 +112,7 @@ class LiveTakerStrat:
         if X is not None:
             with torch.no_grad():                
                 y_hat = self.model(X)
+                self.latest_prediction = y_hat.item()
                 return self._create_orders(y_hat.item(), account, Decimal(price))
         return []
 
@@ -166,6 +168,9 @@ def main():
                 print(f"Current Position: [Error fetching: {e}]")
                 
             print(f"Latest Price:     ${ws.latest_price if ws.latest_price else 'Waiting for tick...'}")
+            
+            if live_strat.latest_prediction is not None:
+                print(f"Latest y_hat:     {live_strat.latest_prediction:.6f}")
             
             if ws.latest_payload:
                 print(f"Last payload:     {ws.latest_payload}")
