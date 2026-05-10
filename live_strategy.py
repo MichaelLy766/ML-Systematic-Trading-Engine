@@ -29,6 +29,7 @@ class IntervalFeatureExtractor:
         self.max_lag = max(self.lags) if self.lags else 1
         self.historical_returns = []
         self.last_close_price = None
+        self.current_candle_close_time_ms = None
 
     def _fetch_historical(self):
         import requests
@@ -48,9 +49,16 @@ class IntervalFeatureExtractor:
         # The very last item is the CURRENT, IN-PROGRESS candle.
         self.last_close_price = float(data[-2][4])
         self.historical_returns = returns[:-1] 
+        self.current_candle_close_time_ms = int(data[-1][6])
 
     def get_features(self, live_price: float) -> Optional[torch.Tensor]:
         import math
+        
+        # Check if the current interval has expired
+        if self.current_candle_close_time_ms is not None:
+            if int(time.time() * 1000) > self.current_candle_close_time_ms:
+                self.historical_returns = []
+                
         if not self.historical_returns:
             self._fetch_historical()
             
